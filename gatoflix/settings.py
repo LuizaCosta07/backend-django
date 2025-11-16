@@ -15,7 +15,10 @@ load_dotenv()
 # Build paths
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-# SECURITY WARNING: keep the secret key used in production secret!
+# DEBUG precisa vir antes de qualquer uso
+DEBUG = os.getenv('DEBUG', 'True') == 'True'
+
+# SECRET_KEY
 SECRET_KEY = os.getenv('SECRET_KEY')
 if not SECRET_KEY or SECRET_KEY == 'django-insecure-dev-key-change-in-production':
     if DEBUG:
@@ -25,6 +28,7 @@ if not SECRET_KEY or SECRET_KEY == 'django-insecure-dev-key-change-in-production
             'SECRET_KEY environment variable must be set to a strong value in production. '
             'Generate one with: python -c "from django.core.management.utils import get_random_secret_key; print(get_random_secret_key())"'
         )
+
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = os.getenv('DEBUG', 'True') == 'True'

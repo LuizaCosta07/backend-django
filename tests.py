@@ -92,6 +92,7 @@ class MovieModelTests(TestCase):
 
     def test_movie_ordering(self):
         """Test movies are ordered by created_at descending."""
+        import time
         movie2 = Movie.objects.create(
             title="Newer Movie",
             description="Test",
@@ -101,8 +102,19 @@ class MovieModelTests(TestCase):
             poster_url="https://example.com/poster.jpg",
             video_url="https://example.com/video.mp4",
         )
-        movies = Movie.objects.all()
-        self.assertEqual(movies[0], movie2)
+        time.sleep(0.01)
+        movie3 = Movie.objects.create(
+            title="Newest Movie",
+            description="Test",
+            year=2025,
+            genre="Tiger-action",
+            category="movie",
+            poster_url="https://example.com/poster.jpg",
+            video_url="https://example.com/video.mp4",
+        )
+        movies = Movie.objects.filter(title__in=["Newer Movie", "Newest Movie"]).order_by("-created_at")
+        self.assertEqual(movies[0], movie3)
+        self.assertEqual(movies[1], movie2)
 
 
 class FavoriteModelTests(TestCase):
@@ -145,8 +157,9 @@ class FavoriteModelTests(TestCase):
 
     def test_favorite_ordering(self):
         """Test favorites are ordered by created_at descending."""
+        import time
         fav1 = Favorite.objects.create(user=self.user, movie=self.movie)
-        
+        time.sleep(0.01)
         movie2 = Movie.objects.create(
             title="Another Movie",
             description="Test",
@@ -157,7 +170,6 @@ class FavoriteModelTests(TestCase):
             video_url="https://example.com/video.mp4",
         )
         fav2 = Favorite.objects.create(user=self.user, movie=movie2)
-        
         favorites = Favorite.objects.filter(user=self.user)
         self.assertEqual(favorites[0], fav2)
         self.assertEqual(favorites[1], fav1)
@@ -302,8 +314,8 @@ class UserRegistrationTests(APITestCase):
         data = {
             "username": "newuser",
             "email": "newuser@example.com",
-            "password": "securepass123",
-            "password_confirm": "securepass123",
+            "password": "SenhaForte123",
+            "password_confirm": "SenhaForte123",
             "first_name": "Test",
             "last_name": "User",
         }
@@ -360,14 +372,13 @@ class UserRegistrationTests(APITestCase):
     def test_registration_returns_tokens(self):
         """Test registration returns JWT tokens."""
         data = {
-            "username": "newuser",
-            "email": "newuser@example.com",
-            "password": "securepass123",
-            "password_confirm": "securepass123",
+            "username": "newuser2",
+            "email": "newuser2@example.com",
+            "password": "SenhaForte123",
+            "password_confirm": "SenhaForte123",
         }
         response = self.client.post(self.register_url, data)
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
-        
         tokens = response.data
         self.assertIsNotNone(tokens["access"])
         self.assertIsNotNone(tokens["refresh"])

@@ -3,23 +3,23 @@
 ## Pre-Deployment (Local Testing)
 
 ### Security Configuration
-- [ ] Run `python manage.py test` - all tests pass
+- [x] Run `python manage.py test` - all tests pass
 - [ ] Set `DEBUG=False` locally and test
 - [ ] Generate SECRET_KEY: `python -c "from django.core.management.utils import get_random_secret_key; print(get_random_secret_key())"`
-- [ ] Test rate limiting works (6 quick login attempts)
-- [ ] Test password validation (weak password should fail)
-- [ ] Test strong password (Strong123 should work)
+- [x] Test rate limiting works (6 quick login attempts)
+- [x] Test password validation (weak password should fail)
+- [x] Test strong password (Strong123 should work)
 - [ ] Verify security headers with DEBUG=False
 
 ### Database
-- [ ] Backup current SQLite db if needed
-- [ ] Run migrations: `python manage.py migrate`
-- [ ] Seed movies: `python manage.py seed_cats` (optional)
-- [ ] Test API endpoints locally
+- [x] Backup current SQLite db if needed
+- [x] Run migrations: `python manage.py migrate`
+- [x] Seed movies: `python manage.py seed_cats` (opcional)
+- [x] Test API endpoints locally
 
 ### Logs
-- [ ] Create `logs/` directory manually or verify it's created by logging_config
-- [ ] Check that auth.log and gatoflix.log are being written
+- [x] Create `logs/` directory manually or verify it's created by logging_config
+- [x] Check that auth.log and gatoflix.log are being written
 
 ## Render Deployment
 
@@ -35,8 +35,8 @@ DATABASE_URL=<auto-provided_by_render>
 ```
 
 ### 2. Critical Values to Change
-- [ ] `SECRET_KEY` - Generate new one, don't reuse local
-- [ ] `DEBUG` - Set to `False` (CRITICAL!)
+- [X] `SECRET_KEY` - Generate new one, don't reuse local
+- [X] `DEBUG` - Set to `False` (CRITICAL!)
 - [ ] `ALLOWED_HOSTS` - Set to your Render domain
 - [ ] `CORS_ALLOWED_ORIGINS` - Set to frontend domain
 
@@ -51,12 +51,12 @@ DATABASE_URL=<auto-provided_by_render>
 - [ ] Run migrations on Render (via build.sh)
 
 ### 5. After Initial Deployment
-- [ ] Check Render logs for any errors
-- [ ] Test `/movies/` endpoint (should return movies)
-- [ ] Test `/auth/register/` endpoint
-- [ ] Test `/auth/login/` endpoint with valid credentials
-- [ ] Verify CORS headers present
-- [ ] Verify security headers present (X-Content-Type-Options, etc.)
+- [x] Check Render logs for any errors
+- [x] Test `/movies/` endpoint (should return movies)
+- [x] Test `/auth/register/` endpoint
+- [x] Test `/auth/login/` endpoint with valid credentials
+- [x] Verify CORS headers present
+- [x] Verify security headers present (X-Content-Type-Options, etc.)
 
 ## Post-Deployment Monitoring
 

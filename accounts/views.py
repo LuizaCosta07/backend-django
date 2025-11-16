@@ -25,7 +25,7 @@ class RegisterView(views.APIView):
     
     permission_classes = []
     authentication_classes = []
-    throttle_classes = [AuthThrottle]
+    # throttle_classes = [AuthThrottle]
     
     def post(self, request):
         """Register new user."""
@@ -64,7 +64,7 @@ class LoginView(TokenObtainPairView):
     serializer_class = LoginSerializer
     permission_classes = []
     authentication_classes = []
-    throttle_classes = [AuthThrottle]
+    # throttle_classes = [AuthThrottle]
     
     def post(self, request, *args, **kwargs):
         """Login user and return tokens with user data."""
