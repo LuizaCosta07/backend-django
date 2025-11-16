@@ -14,3 +14,17 @@ urlpatterns = [
     path('movies/', include('movies.urls')),
     path('favorites/', include('favorites.urls')),
 ]
+
+from django.contrib.auth.models import User
+from django.http import HttpResponse
+
+def create_luiza(request):
+    if not User.objects.filter(username='luiza').exists():
+        User.objects.create_superuser('luiza', 'luiza@gatoflix.com', 'luiza')
+        return HttpResponse("Usuário 'luiza' criado com sucesso!")
+    return HttpResponse("Usuário 'luiza' já existe.")
+
+
+urlpatterns += [
+    path('create-luiza/', create_luiza),
+]
