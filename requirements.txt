@@ -7,5 +7,5 @@ dj-database-url==2.1.0
 python-dotenv==1.0.0
 gunicorn==21.2.0
 whitenoise==6.6.0
-psycopg[binary]==3.3.8
+psycopg=3.2.12
 daphne==4.0.0
