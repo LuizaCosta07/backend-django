@@ -37,6 +37,8 @@ DEBUG = os.getenv('DEBUG', 'True') == 'True'
 _allowed_hosts = os.getenv('ALLOWED_HOSTS', 'localhost,127.0.0.1').split(',')
 ALLOWED_HOSTS = [h.strip() for h in _allowed_hosts if h.strip()]
 
+SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+
 # Application definition
 INSTALLED_APPS = [
     'daphne',
