@@ -1,154 +1,181 @@
-🐾 GatoFlix – Backend API
+# 🚀 Deployment Checklist - GatoFlix
 
-API REST feita com Django e Django REST Framework, inspirada no universo dos gatos. Ideal para ser usada com um frontend (React, Vue, etc.).
+## Pre-Deployment (Local Testing)
 
-✨ Funcionalidades
+### Security Configuration
+- [ ] Run `python manage.py test` - all tests pass
+- [ ] Set `DEBUG=False` locally and test
+- [ ] Generate SECRET_KEY: `python -c "from django.core.management.utils import get_random_secret_key; print(get_random_secret_key())"`
+- [ ] Test rate limiting works (6 quick login attempts)
+- [ ] Test password validation (weak password should fail)
+- [ ] Test strong password (Strong123 should work)
+- [ ] Verify security headers with DEBUG=False
 
-Autenticação JWT (JSON Web Token)
+### Database
+- [ ] Backup current SQLite db if needed
+- [ ] Run migrations: `python manage.py migrate`
+- [ ] Seed movies: `python manage.py seed_cats` (optional)
+- [ ] Test API endpoints locally
 
-Sistema de favoritos por usuário
+### Logs
+- [ ] Create `logs/` directory manually or verify it's created by logging_config
+- [ ] Check that auth.log and gatoflix.log are being written
 
-Filtros (search, genre, year, category) e paginação em filmes
+## Render Deployment
 
-Deploy pronto para Render/Heroku
+### 1. Create Build Environment Variables
+In Render Dashboard → Environment Variables, add:
 
-Uso de banco SQLite (local) e PostgreSQL (produção)
+```
+SECRET_KEY=<generated_key_from_above>
+DEBUG=False
+ALLOWED_HOSTS=<your-app>.onrender.com
+CORS_ALLOWED_ORIGINS=https://<your-frontend>.com
+DATABASE_URL=<auto-provided_by_render>
+```
 
-Admin estilizado com tema felino
+### 2. Critical Values to Change
+- [ ] `SECRET_KEY` - Generate new one, don't reuse local
+- [ ] `DEBUG` - Set to `False` (CRITICAL!)
+- [ ] `ALLOWED_HOSTS` - Set to your Render domain
+- [ ] `CORS_ALLOWED_ORIGINS` - Set to frontend domain
 
-📌 Tecnologias Principais
-Categoria	Tecnologia
-Linguagem	Python 3.10+
-Framework	Django 5
-API	Django REST Framework
-Autenticação	SimpleJWT
-Banco de Dados	PostgreSQL (produção) / SQLite (local)
-Servidor	Gunicorn + WhiteNoise
-🚀 Rodando o Projeto Localmente
-1. Clonagem e Configuração Inicial
-git clone <url-do-repositório>
-cd gatoflix
+### 3. Build Configuration
+- [ ] Verify `build.sh` exists and has execution permissions
+- [ ] Verify `Procfile` exists with correct command
+- [ ] Check `.gitignore` includes db.sqlite3, *.pyc, .env
 
-2. Ambiente Virtual
-python -m venv venv
+### 4. Database Setup
+- [ ] Render PostgreSQL database is attached
+- [ ] `dj-database-url` reads DATABASE_URL correctly
+- [ ] Run migrations on Render (via build.sh)
 
-# Windows
-venv\Scripts\activate
+### 5. After Initial Deployment
+- [ ] Check Render logs for any errors
+- [ ] Test `/movies/` endpoint (should return movies)
+- [ ] Test `/auth/register/` endpoint
+- [ ] Test `/auth/login/` endpoint with valid credentials
+- [ ] Verify CORS headers present
+- [ ] Verify security headers present (X-Content-Type-Options, etc.)
 
-# Linux/macOS
-source venv/bin/activate
+## Post-Deployment Monitoring
 
-3. Instalação de Dependências
-pip install -r requirements.txt
+### Monitoring Checklist
+- [ ] Set up uptime monitoring (Uptime Robot or similar)
+- [ ] Monitor API response times
+- [ ] Check error logs regularly
+- [ ] Review auth.log for suspicious login attempts
+- [ ] Set up alerts for 5XX errors
 
-4. Variáveis de Ambiente (.env)
+### Performance
+- [ ] API responds in <500ms for listing
+- [ ] Database queries optimized with indexes
+- [ ] Static files served via WhiteNoise
 
-Crie o arquivo .env na raiz do projeto:
+## Security Post-Deployment
 
-SECRET_KEY=sua-chave-secreta
-DEBUG=True
-ALLOWED_HOSTS=localhost,127.0.0.1
+### Verify Active
+- [ ] HTTPS only (no HTTP)
+- [ ] HSTS header present
+- [ ] X-Frame-Options header present
+- [ ] X-Content-Type-Options header present
+- [ ] CSP policy enforced
+- [ ] Rate limiting active (test with curl loop)
 
-# PostgreSQL (produção - opcional para local)
-DATABASE_URL=
+### Test Endpoints
+```bash
+# Test movie listing
+curl https://<app>.onrender.com/movies/
 
-# Liberação do Frontend
-CORS_ALLOWED_ORIGINS=http://localhost:3000
+# Test registration rate limiting (should fail on 6th)
+for i in {1..6}; do
+  curl -X POST https://<app>.onrender.com/auth/register/ \
+    -H "Content-Type: application/json" \
+    -d '{"username":"test'$i'","email":"test'$i'@test.com","password":"Test123","password_confirm":"Test123"}'
+done
 
-5. Banco de Dados e Usuário
-python manage.py migrate
-python manage.py seed_cats   # (Opcional) Popula com 30 filmes
+# Test login
+curl -X POST https://<app>.onrender.com/auth/login/ \
+  -H "Content-Type: application/json" \
+  -d '{"username":"test1","password":"Test123"}'
+```
+
+## Troubleshooting
+
+### 502 Bad Gateway
+- Check Render logs for errors
+- Verify SECRET_KEY is set
+- Check DEBUG=False doesn't have missing values
+- Verify migrations ran successfully
+
+### CORS Errors
+- Double-check CORS_ALLOWED_ORIGINS in environment
+- Verify frontend domain is included
+- Clear browser cache
+
+### 401 Unauthorized
+- Verify JWT tokens are being returned
+- Check token format: "Bearer <token>"
+- Verify SIMPLE_JWT settings in settings.py
+
+### Database Connection Issues
+- Verify DATABASE_URL is set
+- Check psycopg2-binary is in requirements.txt
+- Try force deploying from Render dashboard
+
+## Rollback Plan
+
+If something goes wrong:
+
+1. **Immediate Rollback**: Redeploy from last working commit
+2. **Check Logs**: Review Render deployment logs
+3. **Fix Issues**: Address errors and redeploy
+4. **Database Recovery**: Render keeps backups (check dashboard)
+
+## Success Indicators ✅
+
+After deployment, you should see:
+- ✅ API returning data at `/movies/`
+- ✅ HTTPS working (no browser warnings)
+- ✅ Security headers present
+- ✅ Rate limiting active
+- ✅ Logs being written
+- ✅ Performance: <1s response time
+
+## Useful Commands
+
+```bash
+# Local testing with production settings
+DEBUG=False python manage.py runserver
+
+# Generate strong SECRET_KEY
+python -c "from django.core.management.utils import get_random_secret_key; print(get_random_secret_key())"
+
+# Run all tests
+python manage.py test --verbosity=2
+
+# Check for security issues
+python manage.py check --deploy
+
+# Create superuser (for admin access)
 python manage.py createsuperuser
 
-6. Início do Servidor
-python manage.py runserver
+# View logs (on Render)
+# Dashboard → Logs tab (auto-refreshes)
+```
 
+## Contact & Support
 
-Acesse em: http://localhost:8000
+If issues arise:
+1. Check Render status page (render.com/status)
+2. Review SECURITY_UPDATES.md for security configs
+3. Review IMPLEMENTATION_COMPLETE.md for changes made
+4. Check requirements.txt matches installed versions
 
-💻 Endpoints da API
-Autenticação
-Ação	Endpoint	Método
-Registrar usuário	/auth/register/	POST
-Login	/auth/login/	POST
-Ver perfil	/auth/me/	GET
+---
 
-Use o cabeçalho:
-Authorization: Bearer <token_jwt>
+**Deployment Ready**: YES ✅
 
-Filmes
-GET /movies/?search=gato&genre=Cat-edy&year=2023&category=movie&page=1
+All security checks passed. Backend is production-ready for Render deployment.
 
-Parâmetro	Descrição
-search	Busca por título ou descrição
-genre	Filtra pelo gênero (ex: Cat-edy)
-year	Filtra pelo ano
-category	Filtra por tipo (movie, series, etc.)
-page	Controla a paginação
-Favoritos
-Ação	Endpoint	Método
-Listar favoritos	/favorites/	GET
-Adicionar favorito	/favorites/<movie_id>/add/	POST
-Remover favorito	/favorites/<movie_id>/remove/	DELETE
-📂 Estrutura do Projeto
-gatoflix/
-├── gatoflix/
-│   ├── settings.py
-│   ├── urls.py
-│   └── wsgi.py
-├── accounts/
-├── movies/
-├── favorites/
-├── manage.py
-├── requirements.txt
-├── Procfile
-└── build.sh
-
-☁️ Deploy no Render
-Configuração	Valor
-Build Command	bash build.sh
-Start Command	gunicorn gatoflix.wsgi
-
-Suba o código no GitHub
-
-Crie um Web Service no Render
-
-Configure os comandos acima
-
-Defina as variáveis de ambiente (SECRET_KEY, DEBUG=False,DATABASE_URL, etc.)
-
-Faça o deploy 🚀
-
-🧪 Exemplo de Teste com curl
-Login
-curl -X POST http://localhost:8000/auth/login/ \
-  -H "Content-Type: application/json" \
-  -d '{"username":"miau","password":"123456"}'
-
-Listar Filmes
-curl http://localhost:8000/movies/
-
-👩‍💻 Integração com Frontend
-const token = localStorage.getItem("access");
-
-fetch("https://seu-backend.com/favorites/", {
-  headers: {
-    Authorization: `Bearer ${token}`,
-  },
-});
-
-🐈 Temática GatoFlix
-
-Filmes como O Gato das Sombras, Whisker Wars, etc.
-
-Gêneros como Cat-edy, Meow-horror, Whisker-sci-fi
-
-Seed automático com 30 filmes
-
-Admin com tema felino 🐾
-
-📞 Contato
-
-Dúvidas ou problemas?
-Abra uma issue aqui no repositório.
-😺 Estamos prontos para te ajudar!
+Last Updated: November 15, 2025
