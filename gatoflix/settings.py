@@ -15,7 +15,7 @@ load_dotenv()
 # Build paths
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-# DEBUG precisa vir antes de qualquer uso
+# DEBUG needs to be defined early
 DEBUG = os.getenv('DEBUG', 'True') == 'True'
 
 # SECRET_KEY
@@ -25,15 +25,10 @@ if not SECRET_KEY or SECRET_KEY == 'django-insecure-dev-key-change-in-production
         SECRET_KEY = 'django-insecure-dev-key-change-in-production'
     else:
         raise ValueError(
-            'SECRET_KEY environment variable must be set to a strong value in production. '
-            'Generate one with: python -c "from django.core.management.utils import get_random_secret_key; print(get_random_secret_key())"'
+            'SECRET_KEY environment variable must be set to a strong value in production.'
         )
 
-
-# SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = os.getenv('DEBUG', 'True') == 'True'
-
-# Parse ALLOWED_HOSTS with validation (remove empty strings and whitespace)
+# Parse ALLOWED_HOSTS
 _allowed_hosts = os.getenv('ALLOWED_HOSTS', 'localhost,127.0.0.1').split(',')
 ALLOWED_HOSTS = [h.strip() for h in _allowed_hosts if h.strip()]
 
@@ -41,17 +36,21 @@ SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
 
 # Application definition
 INSTALLED_APPS = [
-    'daphne',
+    'daphne',  # Needed for ASGI
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+
+    # Third-party
     'rest_framework',
     'rest_framework_simplejwt',
     'corsheaders',
     'whitenoise.storage',
+
+    # Apps
     'movies',
     'accounts',
     'favorites',
@@ -87,9 +86,11 @@ TEMPLATES = [
     },
 ]
 
+# WSGI + ASGI applications
 WSGI_APPLICATION = 'gatoflix.wsgi.application'
+ASGI_APPLICATION = 'gatoflix.asgi.application'
 
-# Database
+# Database configuration
 if os.getenv('DATABASE_URL'):
     DATABASES = {
         'default': dj_database_url.config(
@@ -128,37 +129,46 @@ TIME_ZONE = 'America/Sao_Paulo'
 USE_I18N = True
 USE_TZ = True
 
-# Static files (CSS, JavaScript, Images)
+# Static files
 STATIC_URL = '/static/'
 STATIC_ROOT = BASE_DIR / 'staticfiles'
 STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 
-# Default primary key field type
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
-# REST Framework configuration
+# REST Framework configuration (CORRIGIDO)
 REST_FRAMEWORK = {
-    'DEFAULT_AUTHENTICATION_CLASSES': (
-        'rest_framework_simplejwt.authentication.JWTAuthentication',
-    ),
-    'DEFAULT_PERMISSION_CLASSES': (
-        'rest_framework.permissions.IsAuthenticatedOrReadOnly',
-    ),
-    'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
-    'PAGE_SIZE': 10,
-    'DEFAULT_FILTER_BACKENDS': [
-        'rest_framework.filters.SearchFilter',
-        'rest_framework.filters.OrderingFilter',
+    "DEFAULT_RENDERER_CLASSES": [
+        "rest_framework.renderers.JSONRenderer",  # ← Resolve o erro de template
     ],
-    'DEFAULT_THROTTLE_CLASSES': [
-        'rest_framework.throttling.AnonRateThrottle',
-        'rest_framework.throttling.UserRateThrottle'
+
+    "DEFAULT_AUTHENTICATION_CLASSES": (
+        "rest_framework_simplejwt.authentication.JWTAuthentication",
+    ),
+
+    "DEFAULT_PERMISSION_CLASSES": (
+        "rest_framework.permissions.IsAuthenticatedOrReadOnly",
+    ),
+
+    "DEFAULT_PAGINATION_CLASS": "rest_framework.pagination.PageNumberPagination",
+    "PAGE_SIZE": 10,
+
+    "DEFAULT_FILTER_BACKENDS": [
+        "django_filters.rest_framework.DjangoFilterBackend",
+        "rest_framework.filters.SearchFilter",
+        "rest_framework.filters.OrderingFilter",
     ],
-    'DEFAULT_THROTTLE_RATES': {
-        'anon': '100/hour',
-        'user': '1000/hour',
-        'auth': '5/min'
-    }
+
+    "DEFAULT_THROTTLE_CLASSES": [
+        "rest_framework.throttling.AnonRateThrottle",
+        "rest_framework.throttling.UserRateThrottle"
+    ],
+
+    "DEFAULT_THROTTLE_RATES": {
+        "anon": "100/hour",
+        "user": "1000/hour",
+        "auth": "5/min"
+    },
 }
 
 # JWT configuration
@@ -169,16 +179,17 @@ SIMPLE_JWT = {
     'BLACKLIST_AFTER_ROTATION': True,
 }
 
-# CORS configuration with validation
+# CORS
 _cors_origins = os.getenv(
     'CORS_ALLOWED_ORIGINS',
-    'http://localhost:3000,http://127.0.0.1:3000'
+    'http://localhost:3000,http://127.0.0.1:3000,http://localhost:5173'
 ).split(',')
+
 CORS_ALLOWED_ORIGINS = [origin.strip() for origin in _cors_origins if origin.strip()]
 
 CORS_ALLOW_CREDENTIALS = True
 
-# Security configuration
+# Security for production
 if not DEBUG:
     SECURE_SSL_REDIRECT = True
     SESSION_COOKIE_SECURE = True
@@ -190,9 +201,9 @@ if not DEBUG:
         'style-src': ("'self'", "'unsafe-inline'"),
         'img-src': ("'self'", 'data:', 'https:'),
     }
-    SECURE_HSTS_SECONDS = 31536000  # 1 year
+    SECURE_HSTS_SECONDS = 31536000
     SECURE_HSTS_INCLUDE_SUBDOMAINS = True
     SECURE_HSTS_PRELOAD = True
 
-# Admin site customization
+# Admin branding
 ADMIN_SITE_HEADER = "GatoFlix Admin 🐾"
