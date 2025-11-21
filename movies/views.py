@@ -7,7 +7,7 @@ from .serializers import MovieSerializer, MovieDetailSerializer
 
 
 class MovieViewSet(viewsets.ReadOnlyModelViewSet):
-    """
+    """ 
     ViewSet for Movie model with filtering, searching, and pagination.
     Endpoints:
     - GET /movies/ - List all movies with filters and search
